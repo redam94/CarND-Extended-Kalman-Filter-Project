@@ -44,8 +44,10 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
    double rho32 = rho*rho2;
    double d = vx*y-vy*x;
 
-   MatrixXd Hj(4, 3);
-
+   MatrixXd Hj(3, 4);
+   if(rho<0.0001){
+      return Hj;
+   }
    Hj << x/rho, y/rho, 0., 0.,
          -y/rho2, x/rho2, 0., 0.,
          y*d/rho32, -x*d/rho32, x/rho, y/rho;

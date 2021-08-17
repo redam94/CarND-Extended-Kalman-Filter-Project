@@ -46,9 +46,14 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
    * TODO: update the state by using Extended Kalman Filter equations
    */
   VectorXd z_pred(3);
-  z_pred << sqrt(x_(0)*x_(0) + x_(1)*x_(1)), 
+  double rho = sqrt(x_(0)*x_(0) + x_(1)*x_(1));
+  if(rho>0.00001){
+    z_pred << rho, 
             atan2(x_(1), x_(0)),
-            (x_(0)*x_(2)+x_(1)*x_(3))/(sqrt(x_(0)*x_(0) + x_(1)*x_(1)));
+            (x_(0)*x_(2)+x_(1)*x_(3))/(rho);
+  } else{
+    z_pred << rho, atan2(x_(1), x_(0)), 0.;
+  }
   VectorXd y = z - z_pred;
   while(y(1)>M_PI){
     y(1) -= 2*M_PI;

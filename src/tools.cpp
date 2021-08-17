@@ -25,6 +25,8 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
      diff = estimations[i].array() - ground_truth[i].array();
      rmse = rmse.array() + diff.array()*diff.array();
   }
+  rmse = rmse/estimations.size();
+  rmse = sqrt(rmse.array());
   return rmse;
 }
 

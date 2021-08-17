@@ -37,6 +37,29 @@ void KalmanFilter::Update(const VectorXd &z) {
    */
   VectorXd z_pred = H_ * x_;
   VectorXd y  = z - z_pred;
+  UpdateCommon(y);
+
+}
+
+void KalmanFilter::UpdateEKF(const VectorXd &z) {
+  /**
+   * TODO: update the state by using Extended Kalman Filter equations
+   */
+  VectorXd z_pred(3);
+  z_pred << sqrt(x_(0)*x_(0) + x_(1)*x_(1)), 
+            atan(x_(1)/x_(0)),
+            (x_(0)*x_(2)+x_(1)*x_(3))/(sqrt(x_(0)*x_(0) + x_(1)*x_(1)));
+  VectorXd y = z - z_pred;
+  while(y(1)>M_PI){
+    y(1) -= 2*M_PI;
+  }
+  while(y(1)<-M_PI){
+    y(1) += 2*M_PI;
+  }
+  UpdateCommon(y);
+}
+
+void KalmanFilter::UpdateCommon(const VectorXd y){
   MatrixXd Ht = H_.transpose();
   MatrixXd S  = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();
@@ -45,11 +68,4 @@ void KalmanFilter::Update(const VectorXd &z) {
 
   x_ = x_ + (K*y);
   P_ = P_ - K*H_*P_;
-
-}
-
-void KalmanFilter::UpdateEKF(const VectorXd &z) {
-  /**
-   * TODO: update the state by using Extended Kalman Filter equations
-   */
 }

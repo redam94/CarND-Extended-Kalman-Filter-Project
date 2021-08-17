@@ -22,9 +22,10 @@ FusionEKF::FusionEKF() {
   R_radar_ = MatrixXd(3, 3);
   H_laser_ = MatrixXd(2, 4);
   Hj_ = MatrixXd(3, 4);
-  ekf_.F_  = MatrixXd(4, 4);
-  ekf_.P_  = MatrixXd(4, 4);
-  
+  MatrixXd F_  = MatrixXd(4, 4);
+  MatrixXd P_  = MatrixXd(4, 4);
+  MatrixXd Q_  = MatrixXd(4, 4);
+
   //measurement covariance matrix - laser
   R_laser_ << 0.0225, 0,
               0, 0.0225;
@@ -47,16 +48,24 @@ FusionEKF::FusionEKF() {
           1., 1., 0., 0.,
           1., 1., 1., 1.;
   //model to predict state.
-  ekf_.F_ << 1., 0., 1., 0.,
-             0., 1., 0., 1.,
-             0., 0., 1., 0.,
-             0., 0., 0., 1.;
+  F_ << 1., 0., 1., 0.,
+        0., 1., 0., 1.,
+        0., 0., 1., 0.,
+        0., 0., 0., 1.;
   //model process covariance.
-  ekf_.P_ << 1., 0., 0., 0.,
-             0., 1., 0., 0.,
-             0., 0., 1000., 0.,
-             0., 0., 0., 1000.;
+  P_ << 1., 0., 0., 0.,
+        0., 1., 0., 0.,
+        0., 0., 1000., 0.,
+        0., 0., 0., 1000.;
   
+  Q_ << 1., 0., 1., 0.,
+        0., 1., 0., 1.,
+        1., 0., 1., 0.,
+        0., 1., 0., 1.;
+
+  VectorXd x_(4);
+  x_ << 0., 0., 0., 0.;
+  ekf_.Init(x_, P_, F_, H_laser_, R_laser_, Q_);
 }
 
 /**
@@ -78,7 +87,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // first measurement
     cout << "EKF: " << endl;
     ekf_.x_ = VectorXd(4);
-    ekf_.x_ << 1, 1, 1, 1;
+    ekf_.x_ << 0, 0, 0, 0;
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // TODO: Convert radar from polar to cartesian coordinates 
@@ -152,10 +161,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // TODO: Radar updates
-    Hj_ = tools.CalculateJacobian(ekf_.x_);
-
+    ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
+    ekf_.UpdateEKF(measurement_pack.raw_measurements_);
   } else {
     // TODO: Laser updates
+    ekf_.H_ = H_laser_;
+    ekf_.Update(measurement_pack.raw_measurements_);
 
   }
 
